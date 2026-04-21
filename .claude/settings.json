@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(echo \"Frontend PID: $!\")",
+      "WebFetch(domain:openrouter.ai)",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:8000/health\" -Method Get)",
+      "Bash(git pull *)",
+      "mcp__serena__activate_project",
+      "mcp__serena__list_memories",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}
