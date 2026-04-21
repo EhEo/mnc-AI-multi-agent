@@ -151,6 +151,10 @@ export default function Home() {
         break;
 
       case "debate_end": {
+        // 토론 종료 시 스트리밍 상태를 모두 정리한다.
+        // expert_done 이벤트가 유실됐을 경우의 안전망이다.
+        setStreamingExperts(new Set());
+        setJudgeStreaming(false);
         // crypto.randomUUID()로 밀리초 충돌 없는 고유 ID 생성
         // 업데이터 외부에서 생성해 StrictMode 이중 호출 시에도 동일 ID 유지
         const entryId = crypto.randomUUID();

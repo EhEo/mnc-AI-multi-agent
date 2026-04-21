@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import AsyncIterator
 
 from app.agents.base import ExpertAgent
+
+logger = logging.getLogger(__name__)
 from app.agents.claude_expert import ClaudeExpert
 from app.agents.gemini_expert import GeminiExpert
 from app.agents.generic_expert import PROVIDER_BASE_URLS, GenericOpenAICompatibleExpert
@@ -152,11 +155,23 @@ class DebateOrchestrator:
         round_num: int,
         prior_turns: list[Turn],
     ) -> AsyncIterator[str | tuple[Turn, str]]:
-        """전문가 토큰 SSE 프레임을 yield하고, 마지막에 (Turn, done_frame) 튜플을 yield."""
+        """전문가 토큰 SSE 프레임을 yield하고, 마지막에 (Turn, done_frame) 튜플을 yield.
+
+        expert.respond()가 예외를 던지더라도 ExpertDoneEvent는 반드시 전송한다.
+        이를 통해 프론트엔드의 streamingExperts 상태가 절대 고착되지 않도록 보장한다.
+        """
         full_text = ""
-        async for delta in expert.respond(question, round_num, prior_turns):
-            full_text += delta
-            yield format_sse(ExpertTokenEvent(round=round_num, expert_id=expert.id, delta=delta))
+        try:
+            async for delta in expert.respond(question, round_num, prior_turns):
+                full_text += delta
+                yield format_sse(ExpertTokenEvent(round=round_num, expert_id=expert.id, delta=delta))
+        except Exception:
+            logger.exception(
+                "Expert %s failed in round %d — sending done with partial text (%d chars)",
+                expert.id,
+                round_num,
+                len(full_text),
+            )
 
         turn = Turn(
             expert_id=expert.id,
