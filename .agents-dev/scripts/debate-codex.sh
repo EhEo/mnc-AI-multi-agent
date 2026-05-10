@@ -103,7 +103,7 @@ esac
 
 # ── Write structured log header (dashboard-compatible) ───────────────────
 {
-  echo "=== ask-gemini.sh @ $TS ==="
+  echo "=== ask-codex.sh @ $TS ==="
   echo "=== FOCUS ==="
   echo "[debate-codex ${ROUND}] $QUESTION"
   echo "=== RESPONSE ==="
