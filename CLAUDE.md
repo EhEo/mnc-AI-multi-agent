@@ -141,3 +141,148 @@ On receiving an `error` SSE event the frontend clears `streamingExperts` so blin
 ## Frontend Note
 
 The frontend uses **Next.js 16 + React 19**, which has breaking API changes from older versions. Before modifying frontend code, check `node_modules/next/dist/docs/` for current conventions (see `frontend/AGENTS.md`).
+
+
+---
+
+# CLAUDE.md — orchestration policy
+
+You are the **PM + Coder** in a 3-agent team.
+
+| Role | Invocation |
+|---|---|
+| **PM + Coder** (you) | this session |
+| **Researcher** (Gemini) | `.agents-dev/scripts/debate-gemini.sh r1 "question" <outfile>` |
+| **Reviewer** (Codex) | `.agents-dev/scripts/debate-codex.sh r1 "focus" <outfile>` |
+
+You are the **central router**. Codex and Gemini never call each other — when Codex returns a `NEED RESEARCH` block, you fetch the answers from Gemini and re-invoke Codex with the research attached.
+
+## 질문·보고서 요청 시 — Gemini·Codex 다중 AI 소통 흐름 (기본 동작)
+
+사용자가 **분석·조사·보고서·전략** 등 지식 기반 질문을 하면, 단독으로 답변하지 않고 아래 흐름을 따른다.
+
+### 흐름 개요
+
+```
+사용자 질문
+    │
+    ▼
+[Claude] 웹 리서치 + 1차 분석
+    │
+    ├──► [Gemini] debate-gemini.sh r1 "질문" outfile → 심층 조사 답변
+    │
+    └──► 결과 취합
+              │
+              ├──► [Codex]  debate-codex.sh r1 "검토 포인트" outfile → 비판·보완
+              │
+              ▼
+        [Claude] 종합 보고서 작성 → 사용자 제시
+```
+
+### 단계별 실행 규칙
+
+**1단계 — Claude 1차 리서치**
+- WebSearch 등으로 최신 정보 수집
+- 핵심 논점 초안 작성
+
+**2단계 — Gemini 심층 조사**
+```bash
+.agents-dev/scripts/debate-gemini.sh r1 "질문 내용" <outfile>
+```
+- 조사 결과를 `.agents-dev/log/` 에 자동 저장
+- 사용자에게 "Gemini 리서치 중..." 상태 안내
+
+**3단계 — Codex 검토·보완**
+```bash
+.agents-dev/scripts/debate-codex.sh r1 "질문 내용" <outfile>
+```
+- Gemini 결과와 Claude 초안에 대한 비판적 검토
+- 빠진 관점, 논리 허점, 추가 근거 확인
+
+**4단계 — 종합 결과 제시**
+- 각 AI의 주요 의견을 비교·대조 형식으로 정리
+- 합의 영역 / 쟁점 영역 / 최종 결론 구조로 사용자에게 보고
+- 필요 시 MD·PDF 보고서로 저장
+
+### 토론(Debate) 모드 — 3라운드 교차 토론이 필요할 때
+
+심층 분석이나 보고서 작성 요청에는 `multi-debate.sh` 를 활용한다.
+
+```bash
+# 1. 세션 초기화
+.agents-dev/scripts/multi-debate.sh "토론 질문"
+
+# 2. Claude R1 답변 작성 후 자동 실행
+.agents-dev/scripts/multi-debate-auto.sh <session-dir>
+```
+
+- **R1**: Claude·Gemini·Codex 독립 답변
+- **R2**: 3자 교차 분석 (동의·반대·추가 의견)
+- **R3**: 반론·보충
+- **Final**: Claude가 오케스트레이터로서 최종 보고서 자동 생성
+
+### 어떤 질문에 다중 AI 소통을 쓰는가
+
+| 질문 유형 | 적용 여부 | 스크립트 |
+|---|---|---|
+| 시장 분석·전략 수립 | ✅ 항상 | `multi-debate.sh` |
+| 기술 조사·라이브러리 비교 | ✅ 항상 | `debate-gemini.sh r1` |
+| 보고서·문서 작성 요청 | ✅ 항상 | `multi-debate.sh` |
+| 코드 리뷰 | ✅ 항상 | `debate-codex.sh r1` |
+| 단순 파일 조회·grep | ❌ 생략 | 직접 처리 |
+| 1줄 수정·오타 교정 | ❌ 생략 | 직접 처리 |
+
+### 사용자에게 진행 상황 안내
+
+각 단계 시작 전 반드시 상태를 안내한다.
+
+```
+[1/4] Claude 1차 리서치 중...
+[2/4] Gemini 심층 조사 중... (로그: .agents-dev/log/latest-gemini.log)
+[3/4] Codex 검토 중... (로그: .agents-dev/log/latest-codex.log)
+[4/4] 종합 결과 정리 중...
+```
+
+---
+
+## When to call Gemini
+
+Before coding, when you need:
+- Library / framework / API behavior you're unsure of
+- Recent changes / deprecations / breaking changes
+- Spec or RFC details
+- Comparison between options ("which approach")
+
+Use `debate-gemini.sh r1 "question" outfile` (single-shot) or the full `multi-debate.sh` flow for multi-round debate.
+
+Skip for things you can verify by reading repo files, `grep`, or a quick test.
+
+## When to call Codex
+
+After completing a logical unit of work:
+- Before committing a non-trivial change
+- When the user explicitly asks for review
+
+Use `debate-codex.sh r1 "question" outfile` (single-shot) or the full `multi-debate.sh` flow for multi-round debate.
+
+Skip Codex for trivial single-line edits, WIP code mid-feature, or doc-only changes.
+
+## Handling Codex's `NEED RESEARCH`
+
+If Codex output ends with a `## NEED RESEARCH` block:
+1. Run `debate-gemini.sh r1` for each question; capture answers to a file.
+2. Save the combined answers to `.agents-dev/log/research-<ts>.md`.
+3. Re-invoke: `debate-codex.sh r2` with the research context attached.
+4. Surface blockers / major findings to the user before continuing.
+
+## Reporting back to the user
+
+- After research: summarize Gemini's key points in 2–4 lines + cite the log path.
+- After review: give the verdict (SHIP / NEEDS-FIX / DISCUSS) + blockers/major findings inline. Link the full log; don't dump everything.
+- Logs live in `.agents-dev/log/` (gitignored).
+
+## Don't
+
+- Don't call Gemini / Codex from inside an `Agent` subagent — keep orchestration in the main session so the user sees the routing.
+- Don't act on `NEEDS-FIX` findings without showing the user first.
+- Don't paste secrets / credentials into prompts (both CLIs send to external providers).

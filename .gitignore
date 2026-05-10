@@ -28,3 +28,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# 3-agent harness logs
+.agents-*/log/
+.agents-*/state/
