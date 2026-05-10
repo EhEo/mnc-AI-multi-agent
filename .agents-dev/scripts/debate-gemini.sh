@@ -109,8 +109,10 @@ esac
   echo "=== RESPONSE ==="
 } > "$STRUCTURED_LOG"
 
-# ── Run Gemini: clean output → OUTFILE, structured log appended ──────────
+# ── Run Gemini: filter preamble lines, clean output → OUTFILE + log ──────
 RC=0
-"${RESEARCHER_CLI:-${GEMINI_CLI:-gemini}}" -p "$PROMPT" 2>&1 | tee -a "$STRUCTURED_LOG" > "$OUTFILE" || RC=$?
+"${RESEARCHER_CLI:-${GEMINI_CLI:-gemini}}" -p "$PROMPT" 2>&1 \
+  | grep -v "^Warning:\|^Ripgrep is not\|^Falling back" \
+  | tee -a "$STRUCTURED_LOG" > "$OUTFILE" || RC=$?
 printf '\n=== END (rc=%d) ===\n' "$RC" >> "$STRUCTURED_LOG"
 exit "$RC"
