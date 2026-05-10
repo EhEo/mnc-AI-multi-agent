@@ -152,8 +152,12 @@ You are the **PM + Coder** in a 3-agent team.
 | Role | Invocation |
 |---|---|
 | **PM + Coder** (you) | this session |
-| **Researcher** (Gemini) | `.agents-dev/scripts/debate-gemini.sh r1 "question" <outfile>` |
-| **Reviewer** (Codex) | `.agents-dev/scripts/debate-codex.sh r1 "focus" <outfile>` |
+| **PM + Coder** (you) | this session |
+| **Debater P2** (Gemini) | `.agents-dev/scripts/debate-gemini.sh r1 "question" <outfile>` |
+| **Debater P3** (Codex) | `.agents-dev/scripts/debate-codex.sh r1 "question" <outfile>` |
+
+> **이 세션은 토론(Debate) 모드**입니다. Gemini·Codex는 항상 `debate-*.sh`를 통해 호출합니다.  
+> 순수 기술 리서치(`ask-gemini.sh`)·코드 리뷰(`ask-codex.sh`)는 별도 리서치/리뷰 세션에서 사용합니다.
 
 You are the **central router**. Codex and Gemini never call each other — when Codex returns a `NEED RESEARCH` block, you fetch the answers from Gemini and re-invoke Codex with the research attached.
 
@@ -226,9 +230,9 @@ You are the **central router**. Codex and Gemini never call each other — when 
 | 질문 유형 | 적용 여부 | 스크립트 |
 |---|---|---|
 | 시장 분석·전략 수립 | ✅ 항상 | `multi-debate.sh` |
-| 기술 조사·라이브러리 비교 | ✅ 항상 | `debate-gemini.sh r1` |
+| 기술 조사·분석 | ✅ 항상 | `debate-gemini.sh r1` |
 | 보고서·문서 작성 요청 | ✅ 항상 | `multi-debate.sh` |
-| 코드 리뷰 | ✅ 항상 | `debate-codex.sh r1` |
+| 코드·전략 검토 | ✅ 항상 | `debate-codex.sh r1` |
 | 단순 파일 조회·grep | ❌ 생략 | 직접 처리 |
 | 1줄 수정·오타 교정 | ❌ 생략 | 직접 처리 |
 
@@ -253,7 +257,7 @@ Before coding, when you need:
 - Spec or RFC details
 - Comparison between options ("which approach")
 
-Use `debate-gemini.sh r1 "question" outfile` (single-shot) or the full `multi-debate.sh` flow for multi-round debate.
+이 세션에서는 `debate-gemini.sh r1 "question" outfile` 을 사용합니다.
 
 Skip for things you can verify by reading repo files, `grep`, or a quick test.
 
@@ -263,7 +267,7 @@ After completing a logical unit of work:
 - Before committing a non-trivial change
 - When the user explicitly asks for review
 
-Use `debate-codex.sh r1 "question" outfile` (single-shot) or the full `multi-debate.sh` flow for multi-round debate.
+이 세션에서는 `debate-codex.sh r1 "question" outfile` 을 사용합니다.
 
 Skip Codex for trivial single-line edits, WIP code mid-feature, or doc-only changes.
 
