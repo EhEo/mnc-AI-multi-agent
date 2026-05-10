@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# dashboard-tui — run from inside a harness project to start the TUI dashboard.
+# Team name is automatically set to the current folder name.
+#
+# Usage:
+#   dashboard-tui           # team name = current folder name
+#   dashboard-tui -n NAME   # override team name
+set -euo pipefail
+
+SCRIPT="$(pwd)/.agents-dev/scripts/dashboard_tui.py"
+
+if [ ! -f "$SCRIPT" ]; then
+  echo "error: harness not installed in $(pwd)" >&2
+  echo "       Run 'harness-install' first, then cd into your project." >&2
+  exit 1
+fi
+
+exec python3 "$SCRIPT" "$@"

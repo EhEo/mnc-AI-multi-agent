@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3-Agent Team Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <span class="logo">🤖</span>
+      <span class="title">3-Agent Team Dashboard</span>
+      <span class="team-badge" id="team-name">loading...</span>
+    </div>
+    <div class="header-right">
+      <span class="conn-dot" id="conn-dot"></span>
+      <span class="conn-label" id="conn-label">connecting</span>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- Left: Activity log -->
+    <section class="panel panel-green">
+      <div class="panel-title">
+        <span>🟢</span> Claude (PM) — Activity
+      </div>
+      <div class="panel-body scroll" id="activity-log">
+        <div class="empty-msg">Run <code>claude</code> in the project directory to start.</div>
+      </div>
+    </section>
+
+    <!-- Right: Gemini + Codex -->
+    <div class="right-col">
+
+      <!-- Gemini -->
+      <section class="panel panel-cyan">
+        <div class="panel-title">
+          <span>🔍</span> GEMINI · researcher
+          <span class="status-badge" id="gemini-status">waiting</span>
+        </div>
+        <div class="panel-body scroll" id="gemini-body">
+          <div class="empty-msg">Waiting for first call...</div>
+        </div>
+      </section>
+
+      <!-- Codex -->
+      <section class="panel panel-magenta">
+        <div class="panel-title">
+          <span>🧐</span> CODEX · reviewer
+          <span class="status-badge" id="codex-status">waiting</span>
+        </div>
+        <div class="panel-body scroll" id="codex-body">
+          <div class="empty-msg">Waiting for first call...</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

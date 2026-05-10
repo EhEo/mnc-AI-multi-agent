@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# dashboard-web — start the web dashboard from inside a harness project.
+# Team name is automatically set to the current folder name.
+#
+# Usage:
+#   dashboard-web               # team name = current folder name, port 7654
+#   dashboard-web -n NAME       # override team name
+#   dashboard-web --port 8765   # custom port
+set -euo pipefail
+
+SCRIPT="$(pwd)/.agents-dev/web/server.py"
+
+if [ ! -f "$SCRIPT" ]; then
+  echo "error: harness not installed in $(pwd)" >&2
+  echo "       Run 'harness-install' first, then cd into your project." >&2
+  exit 1
+fi
+
+exec python3 "$SCRIPT" "$@"
